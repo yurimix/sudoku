@@ -1,30 +1,17 @@
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SudokuSolver {
 
     private static final int MATRIX_SECTION_SIZE = 3;
-
     private static final int MATRIX_ROWS = MATRIX_SECTION_SIZE * MATRIX_SECTION_SIZE;
     private static final int MATRIX_COLS = MATRIX_ROWS;
-
     private static final int MIN_VALUE = 1;
     private static final int MAX_VALUE = MATRIX_COLS;
     private static final int EMPTY_VALUE = 0;
 
-    private static class Section {
-        int start;
-        int end;
-
-        public Section(int start, int end) {
-            this.start = start;
-            this.end = end;
-        }
-    }
+    private record Section(int start, int end){}
 
     public static boolean solve(int[][] sudoku) {
         if (sudoku.length != MATRIX_ROWS || sudoku[0].length != MATRIX_COLS) {
@@ -37,8 +24,8 @@ public class SudokuSolver {
     }
 
     private static boolean checkSudoku(int[][] sudoku) {
-        for (var row = 0; row < MATRIX_ROWS; row++) {
-            for (var col = 0; col < MATRIX_COLS; col++) {
+        for (int row = 0; row < MATRIX_ROWS; row++) {
+            for (int col = 0; col < MATRIX_COLS; col++) {
                 if (sudoku[row][col] != EMPTY_VALUE) {
                     if (!checkCell(sudoku, row, col)) {
                         return false;
@@ -53,10 +40,9 @@ public class SudokuSolver {
         for (int row = 0; row < MATRIX_ROWS; row++) {
             for (int col = 0; col < MATRIX_COLS; col++) {
                 if (sudoku[row][col] == EMPTY_VALUE) {
-                    // it's just more fun this way
-                    List<Integer> values = IntStream.range(1, MAX_VALUE + 1).
-                            mapToObj(Integer::valueOf).
-                            collect(Collectors.toList());
+                    // it's just more fun this way :)
+                    var values = IntStream.range(MIN_VALUE, MAX_VALUE + 1).
+                            boxed().collect(Collectors.toList());
                     Collections.shuffle(values);
                     // for each possible values
                     for (var val : values) {
@@ -85,7 +71,7 @@ public class SudokuSolver {
     }
 
     private static boolean checkColumn(int[][] sudoku, int row, int col) {
-        int[] data = new int[MATRIX_COLS];
+        var data = new int[MATRIX_COLS];
         for (int r = 0; r < MATRIX_ROWS; r++) {
             data[r] = sudoku[r][col];
         }
@@ -93,12 +79,12 @@ public class SudokuSolver {
     }
 
     private static boolean checkSection(int[][] sudoku, int row, int col) {
-        var rowIndexes = sectionIndices(row);
-        var colIndexes = sectionIndices(col);
-        int[] data = new int[MATRIX_SECTION_SIZE * MATRIX_SECTION_SIZE];
-        var i = 0;
-        for (var r = rowIndexes.start; r <= rowIndexes.end; r++) {
-            for (var c = colIndexes.start; c <= colIndexes.end; c++) {
+        var rIdx = sectionIndexes(row);
+        var cIdx = sectionIndexes(col);
+        var data = new int[MATRIX_SECTION_SIZE * MATRIX_SECTION_SIZE];
+        int i = 0;
+        for (int r = rIdx.start; r <= rIdx.end; r++) {
+            for (int c = cIdx.start; c <= cIdx.end; c++) {
                 data[i++] = sudoku[r][c];
             }
         }
@@ -109,8 +95,8 @@ public class SudokuSolver {
         return IntStream.of(data).filter(i -> i == val).count() < 2;
     }
 
-    private static Section sectionIndices(int idx) {
-        var start =  (idx / MATRIX_SECTION_SIZE) * MATRIX_SECTION_SIZE;
+    private static Section sectionIndexes(int idx) {
+        int start =  (idx / MATRIX_SECTION_SIZE) * MATRIX_SECTION_SIZE;
         return new Section(start, start + MATRIX_SECTION_SIZE - 1);
     }
 }
